@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+.env
+
+# Editors
+.vscode/
+.idea/
+
+# HuggingFace / Transformers caches (do NOT commit)
+hf_cache/
+**/hf_cache/
+.cache/
+**/.cache/
+transformers_cache/
+datasets_cache/
+
+# Training outputs / logs (do NOT commit)
+outputs/
+**/outputs/
+runs/
+**/runs/
+checkpoint-*/
+**/checkpoint-*/
+*.log
+*.out
+*.err
+
+# TensorBoard event files (too large)
+events.out.tfevents.*
+
+# Screen / terminal dumps
+screenlog.*
+*.txt
+
+# OS
+.DS_Store
