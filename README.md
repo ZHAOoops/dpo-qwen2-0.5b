@@ -134,17 +134,16 @@ tensorboard --logdir /root/autodl-tmp/outputs --port 6006 --bind_all
 - smoothing 我截图时用过 `0.8` 和 `0.6` 两个版本（都能帮助看趋势，但会改变视觉感受，所以我同时留了两张截图）
 - 某些图会挤出屏幕，这属于 TensorBoard UI 体验问题，不影响训练
 
-### 曲线截图（请我自己粘贴）
-训练中途（smoothing=0.8）：
-- \[ ] `docs/img/tb_mid_smooth_0p8.png`
+### 曲线截图
 
-训练完成（smoothing=0.8）：
-- \[ ] `docs/img/tb_final_smooth_0p8.png`
+训练中途（smoothing=0.8）  
+![tb_mid_smooth_0p8](docs/img/tb_mid_smooth_0p8.png)
 
-训练完成（smoothing=0.6）：
-- \[ ] `docs/img/tb_final_smooth_0p6.png`
+训练完成（smoothing=0.8）  
+![tb_final_smooth_0p8](docs/img/tb_final_smooth_0p8.png)
 
-（我后续会把这些图片放进 `docs/img/` 并在这里用 markdown 引用。）
+训练完成（smoothing=0.6）  
+![tb_final_smooth_0p6](docs/img/tb_final_smooth_0p6.png)
 
 ---
 
