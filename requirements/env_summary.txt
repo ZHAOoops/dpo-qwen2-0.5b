@@ -1,0 +1,8 @@
+python: 3.10.8
+torch: 2.1.2+cu118 cuda_available: True
+cuda_runtime: 11.8
+numpy: 1.26.4
+transformers: 4.46.3
+trl: 0.15.2
+datasets: 2.21.0
+accelerate: 1.12.0

@@ -46,3 +46,4 @@ screenlog.*
 # Allow reproducibility requirements
 !requirements/
 !requirements/requirements_freeze.txt
+!requirements/env_summary.txt
