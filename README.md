@@ -1,35 +1,35 @@
-# Qwen2-0.5B + TRL DPO on ultrafeedback_binarized (AutoDL / 4090)
+# Qwen2-0.5B + TRL DPO on ultrafeedback_binarized (AutoDL 单卡4090)
 
 这是我用一个尽量小的模型把 DPO（Direct Preference Optimization）完整跑通的一次记录。目标不是“刷指标”，而是把训练流程跑顺，并能在 TensorBoard 里看到关键曲线（reward margin / reward accuracy / chosen & rejected 的 logprob 等），方便理解 DPO 的行为。
 
-我在国内环境（AutoDL）做的。过程里遇到过比较典型的版本依赖坑、数据字段格式坑、以及一些“看起来像训练失败”的评测误用坑。我把这些都写进这个仓库，方便以后自己和别人复现时少走弯路。
+我在AutoDL做的过程里遇到过比较典型的版本依赖坑、数据字段格式坑、以及一些看起来像训练失败的评测误用坑。我把这些都写进这个仓库，方便以后自己和别人复现时少走弯路。
 
 ---
 
-## 0. TL;DR（我实际跑通的最短路线）
+## 0. 我实际跑通的最短路线
 
 1. 4090 单卡（24GB）能跑：先用 `train/train_dpo_min.py` 跑 60 steps 验证流程 + TensorBoard 曲线。
 2. 跑通后再用 `train/train_dpo_full.py` 跑全量训练（62.1k pairs）。
 3. 训练曲线我主要看 5 条：`loss`, `rewards/margins`, `rewards/accuracies`, `logps/chosen`, `logps/rejected`。
-4. 我中途遇到的坑都是真实踩过的：transformers/trl/torch/numpy 版本不匹配、数据集字段结构不是字符串、离线评测脚本把 margin 算反、以及 OOM（显存）问题。
+4. 我中途遇到的坑都是真实踩过的：transformers/trl/torch/numpy 版本不匹配、数据集字段结构不是字符串、离线评测脚本把 margin 算反、以及显存问题。
 
 ---
 
-## 1. 实验设置（我实际用的）
+## 1. 我实际用的实验设置
 
 ### 模型
 - Base model: `Qwen/Qwen2-0.5B-Instruct`
 
 ### 数据集
 - HF dataset: `trl-lib/ultrafeedback_binarized`
-- train split: 大约 `62135` 行（pairs）
+- train split:  `62135` 行
 
 注意：这个数据集里的 `chosen/rejected` 不是纯字符串，而是 **chat messages list**（每条是 `{role, content}`）。如果你自己写 tokenize，很容易因为格式不对直接报错。TRL 内置的 DPOTrainer 会做 prompt 抽取、套 chat template、再 tokenize。
 
 ### 机器
 - AutoDL 单卡 RTX 4090（24GB 显存）
 - CPU 16 核、内存 120GB
-- 数据盘：`/root/autodl-tmp`（我把 HF cache / 输出都放这里）
+- 数据盘：`/root/autodl-tmp`（HF cache / 输出都放这里）
 
 ---
 
@@ -38,7 +38,7 @@
 ```
 train/
   train_dpo_min.py        # 60 steps 快速跑通，验证能训练+能出曲线
-  train_dpo_full.py       # 全量训练脚本（我实际跑 full 的用它）
+  train_dpo_full.py       # 全量训练脚本（实际跑 full 的用它）
 eval/
   trl_metrics_check.py
   trl_metrics_check_ref.py
@@ -49,7 +49,7 @@ eval/
   dump_two_negatives.py
   generate_check.py
 requirements/
-  requirements_freeze.txt  # 我训练环境的 pip freeze 结果（用于复现）
+  requirements_freeze.txt  # 我训练环境的 pip freeze 结果，用于复现
 notes/
   file_manifest.txt
 ```
@@ -59,8 +59,8 @@ notes/
 ## 3. 国内环境：下载时开“学术加速”，训练时关闭
 
 我在国内训练时：
-- **下载模型/数据集**：开学术加速（否则 HuggingFace 很慢或不可达）
-- **开始训练**：关闭加速（训练本身不需要联网；我不想让代理影响训练 IO/速度）
+- **下载模型/数据集**：开学术加速
+- **开始训练**：关闭加速
 
 ### 开启学术加速（需要访问 HF 时）
 ```bash
@@ -74,7 +74,7 @@ unset http_proxy && unset https_proxy
 
 ---
 
-## 4. HF Cache & 输出路径（我实际这么配的）
+## 4. HF Cache & 输出路径
 
 把 cache 放到数据盘，避免系统盘爆掉：
 
@@ -85,22 +85,20 @@ export TRANSFORMERS_CACHE=/root/autodl-tmp/hf_cache/transformers
 export HF_DATASETS_CACHE=/root/autodl-tmp/hf_cache/datasets
 ```
 
-（transformers 会提示 `TRANSFORMERS_CACHE` 未来弃用，但不影响使用。）
+transformers 会提示 `TRANSFORMERS_CACHE` 未来弃用，但不影响使用。
 
 ---
 
-## 5. 依赖版本（我最后跑通的一套）
+## 5. 我最后跑通的一套依赖版本
 
-我在这里不“猜测最佳版本”，只记录我自己最后确实跑通的一套。完整内容在：
+完整内容在：
 - `requirements/requirements_freeze.txt`
 
-建议复现时直接对照 freeze，而不是“只看 torch/transformers/trl 三个”。
-
-（如果你要完全复刻，最好新建 venv/conda env，避免污染系统预装环境。）
+建议复现时直接对照 freeze
 
 ---
 
-## 6. 第一步：先跑通 60 steps（最重要）
+## 6. 第一步：先跑通 60 steps
 
 我先用小步数验证：
 - 能正常 tokenize 数据
@@ -126,14 +124,14 @@ accelerate launch train/train_dpo_min.py
 
 ---
 
-## 7. TensorBoard（实时看曲线）
+## 7. TensorBoard 可视化
 
 ```bash
 tensorboard --logdir /root/autodl-tmp/outputs --port 6006 --bind_all
 ```
 
 我用过的观察点：
-- smoothing 我截图时用过 `0.8` 和 `0.6` 两个版本（都能帮助看趋势，但会改变“视觉感受”，所以我会同时留两张截图）
+- smoothing 我截图时用过 `0.8` 和 `0.6` 两个版本（都能帮助看趋势，但会改变视觉感受，所以我同时留了两张截图）
 - 某些图会挤出屏幕，这属于 TensorBoard UI 体验问题，不影响训练
 
 ### 曲线截图（请我自己粘贴）
@@ -150,9 +148,9 @@ tensorboard --logdir /root/autodl-tmp/outputs --port 6006 --bind_all
 
 ---
 
-## 8. 第二步：跑全量训练（62.1k）
+## 8. 第二步：跑全量训练
 
-在 60 steps 跑通后，我直接跑 full：
+在 60 steps 跑通后，我跑了 full：
 
 ```bash
 accelerate launch train/train_dpo_full.py
@@ -162,18 +160,16 @@ accelerate launch train/train_dpo_full.py
 
 ---
 
-## 9. 我今天遇到过的坑（真实记录）
+## 9. 我遇到过的坑
 
-### 9.1 版本依赖问题（最折磨人的部分）
+### 9.1 最折磨人的版本依赖问题
 我遇到过：
 - transformers/trl 的 API 变动导致参数名不一致（例如 `processing_class` vs `tokenizer`）
 - 一些组合会触发 import error（例如某些 symbols 在不同 transformers 版本里才存在）
 - numpy 2.x 和某些二进制编译包（尤其 torch/torchvision）会提示“不兼容 / 可能崩溃”
 
-我最终以“能跑通为准”把版本固定下来，并写进 `requirements_freeze.txt`，避免以后复现时再掉坑里。
+我最终以能跑通为准把版本固定下来，并写进 `requirements_freeze.txt`，避免以后复现时再掉坑里。
 
-（这里可以贴你最关键的一条报错截图/日志）
-- \[ ] `docs/img/bug_versions.png`
 
 ### 9.2 数据集字段不是字符串：`chosen/rejected` 是 list[dict]
 我一开始用的最小脚本会报类似错误：
@@ -182,11 +178,9 @@ accelerate launch train/train_dpo_full.py
 
 后来我改用 TRL 的标准处理流程：从 message list 抽 prompt，套 chat template，再 tokenize，这样不会手写错。
 
-（这里可以贴你当时打印出来的字段结构截图/日志）
-- \[ ] `docs/img/dataset_structure.png`
 
 ### 9.3 “离线评测算出来全是负 margin”不等于训练失败
-我曾经写过一个离线脚本，用 teacher-forced logprob 去算 margin，结果一度全是负的，看起来像“训崩了”。但后面用 TRL 内部逻辑重新算，就能得到合理的正 margin（至少大部分样本是这样）。
+我曾经写过一个离线脚本，用 teacher-forced logprob 去算 margin，结果一度全是负的，看起来像训崩了。但后面用 TRL 内部逻辑重新算，就能得到合理的正 margin（至少大部分样本是这样）。
 
 结论：**评测脚本非常容易写错（尤其是 prompt/answer 的拼接、mask、截断、sum vs mean、以及 ref 的对齐方式）**。我把相关脚本留在 `eval/` 里，并尽量用 TRL 的方法去验证。
 
@@ -203,8 +197,5 @@ accelerate launch train/train_dpo_full.py
 
 ---
 
-## 11. TODO（我后续想补的）
-- \[ ] 把训练曲线截图、关键报错截图补进 `docs/img/`
-- \[ ] 把 `train/train_dpo_full.py` 里的超参写清楚（lr、batch size、beta、max_len 等）
-- \[ ] 增加一个更系统的 eval：比如固定一组 prompts + 自动化生成对比 + 统计长度偏置
+
 
