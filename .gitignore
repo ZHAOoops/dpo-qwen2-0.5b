@@ -42,3 +42,7 @@ screenlog.*
 
 # OS
 .DS_Store
+
+# Allow reproducibility requirements
+!requirements/
+!requirements/requirements_freeze.txt
