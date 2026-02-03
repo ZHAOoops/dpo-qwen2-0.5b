@@ -4,7 +4,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 import math
 
 REF_ID = "Qwen/Qwen2-0.5B-Instruct"
-POLICY_ID = "/root/autodl-tmp/outputs/Qwen2-0.5B-DPO-full/checkpoint-6000"
+POLICY_ID = "/root/autodl-tmp/outputs/Qwen2-0.5B-DPO-full/checkpoint-7766"
 IDX = [48598, 18024]
 
 tokenizer = AutoTokenizer.from_pretrained(REF_ID)

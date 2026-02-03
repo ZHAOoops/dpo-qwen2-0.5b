@@ -47,3 +47,7 @@ screenlog.*
 !requirements/
 !requirements/requirements_freeze.txt
 !requirements/env_summary.txt
+
+# local artifacts / notebooks
+artifacts/
+**/.ipynb_checkpoints/
