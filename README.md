@@ -1,6 +1,6 @@
 # Qwen2-0.5B + TRL DPO on ultrafeedback_binarized (AutoDL 单卡4090)
 
-这是我用一个尽量小的模型把 DPO（Direct Preference Optimization）完整跑通的一次记录。目标不是“刷指标”，而是把训练流程跑顺，并能在 TensorBoard 里看到关键曲线（reward margin / reward accuracy / chosen & rejected 的 logprob 等），方便理解 DPO 的行为。
+这是我用一个尽量小的模型把 DPO（Direct Preference Optimization）完整跑通的一次记录。目标是把训练流程跑通，并能在 TensorBoard 里看到关键曲线（reward margin / reward accuracy / chosen & rejected 的 logprob 等），方便理解 DPO 的行为。
 
 我在AutoDL做的过程里遇到过比较典型的版本依赖坑、数据字段格式坑、以及一些看起来像训练失败的评测误用坑。我把这些都写进这个仓库，方便以后自己和别人复现时少走弯路。
 
