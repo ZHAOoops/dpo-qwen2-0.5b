@@ -179,7 +179,7 @@ accelerate launch train/train_dpo_full.py
 后来我改用 TRL 的标准处理流程：从 message list 抽 prompt，套 chat template，再 tokenize，这样不会手写错。
 
 
-### 9.3 “离线评测算出来全是负 margin”不等于训练失败
+### 9.3 离线评测算出来全是负 margin也许不等于训练失败
 我曾经写过一个离线脚本，用 teacher-forced logprob 去算 margin，结果一度全是负的，看起来像训崩了。但后面用 TRL 内部逻辑重新算，就能得到合理的正 margin（至少大部分样本是这样）。
 
 结论：**评测脚本非常容易写错（尤其是 prompt/answer 的拼接、mask、截断、sum vs mean、以及 ref 的对齐方式）**。我把相关脚本留在 `eval/` 里，并尽量用 TRL 的方法去验证。
